@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProductMan — Renato</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --border: #1f1f2e;
+            --purple: #a78bfa;
+            --orange: #fb923c;
+            --green: #34d399;
+            --yellow: #fbbf24;
+            --text: #e2e2e2;
+            --muted: #666;
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .container { max-width: 680px; margin: 0 auto; padding: 60px 24px; }
+        header { margin-bottom: 60px; }
+        .logo { font-size: 0.8em; color: var(--muted); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+        h1 { font-size: 2.4em; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
+        h1 span { color: var(--purple); }
+        .tagline { color: var(--muted); font-size: 1em; margin-top: 10px; }
+        .divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+        .challenge-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; position: relative; overflow: hidden; }
+        .challenge-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--orange); }
+        .challenge-card::after { content: ''; position: absolute: top: 0; right: 0; width: 200px; height: 200px; background: radial-gradient(circle, var(--orange) 0%, transparent 70%); opacity: 0.05; pointer-events: none; }
+        .challenge-label { font-size: 0.7em; text-transform: uppercase; letter-spacing: 2px; color: var(--orange); margin-bottom: 16px; font-weight: 700; }
+        .challenge-text { font-size: 1.35em; font-weight: 700; line-height: 1.4; color: #fff; }
+        .challenge-date { font-size: 0.8em; color: var(--muted); margin-top: 20px; }
+
+        .actions { margin-top: 40px; }
+        .section-label { font-size: 0.75em; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 16px; }
+        textarea { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text); padding: 16px; font-family: inherit; font-size: 0.95em; resize: vertical; min-height: 100px; }
+        textarea:focus { outline: none; border-color: var(--purple); }
+        textarea::placeholder { color: var(--muted); }
+        .btn { display: inline-block; margin-top: 12px; padding: 12px 28px; background: var(--purple); color: #fff; border: none; border-radius: 10px; font-weight: 700; font-size: 0.9em; cursor: pointer; }
+        .btn:hover { background: #8b5cf6; }
+
+        .history { margin-top: 50px; }
+        .history-item { padding: 14px 0; border-bottom: 1px solid var(--border); }
+        .history-item .date { font-size: 0.75em; color: var(--muted); margin-bottom: 4px; }
+        .history-item .text { font-size: 0.95em; color: var(--text); }
+
+        .tip { margin-top: 40px; padding: 16px 20px; background: var(--surface); border-left: 3px solid var(--green); border-radius: 0 12px 12px 0; font-size: 0.9em; color: var(--green); }
+        .tip strong { display: block; margin-bottom: 4px; font-size: 0.75em; text-transform: uppercase; letter-spacing: 1px; }
+
+        .footer { margin-top: 60px; text-align: center; font-size: 0.75em; color: var(--muted); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">ProductMan v1.0</div>
+            <h1>Acorda, <span>Renato.</span><br>Faz acontecer.</h1>
+            <p class="tagline">Treino diário. Sem desculpa. Sem enrolação.</p>
+        </header>
+
+        <hr class="divider">
+
+        <div class="challenge-card">
+            <div class="challenge-label">🔥 Desafio de Hoje</div>
+            <div class="challenge-text" id="challengeText">Carregando...</div>
+            <div class="challenge-date" id="challengeDate"></div>
+        </div>
+
+        <div class="actions">
+            <div class="section-label">✍️ O que você fez hoje</div>
+            <textarea id="actionInput" placeholder="，哪怕是 pequeno一步. Registra aqui."></textarea>
+            <button class="btn" onclick="saveAction()">Registrar</button>
+        </div>
+
+        <div class="history" id="historySection">
+            <div class="section-label">📋 Últimas ações</div>
+            <div id="historyList"></div>
+        </div>
+
+        <div class="tip">
+            <strong>💡 Regra</strong>
+            Não precisa ser grande. Só precisa ser feito. Açao pequena > plano grande.
+        </div>
+
+        <div class="footer">ProductMan — experimental · sem garantia · sem frescura</div>
+    </div>
+
+    <script>
+        const challenges = [
+            { q: "O que você está empurrando há mais de uma semana que sabe que precisa fazer?", type: "provocação" },
+            { q: "Se tivesse 3 horas de foco total HOJE, em qual projeto usaria?", type: "foco" },
+            { q: "Qual ferramenta você falou que ia aprender e nunca abriu? Abre agora.", type: "ação" },
+            { q: "Você está complicando algo que podia ser simples. O quê?", type: "provocação" },
+            { q: "Quanto você cobraria pela sua habilidade mais valiosa? Esse número é justo.", type: "dinheiro" },
+            { q: "Faz uma coisa. Só uma. A mais importante. Qual é?", type: "ação" },
+            { q: "Publica algo público sobre o que você está fazendo. Agora.", type: "ação" },
+            { q: "O que você faria se não tivesse medo de falhar?", type: "provocação" },
+            { q: "Hoje: termina algo que você deixou pela metade.", type: "ação" },
+            { q: "Você está gastando energia no lugar certo?", type: "provocação" }
+        ];
+
+        function getTodayChallenge() {
+            const now = new Date();
+            const seed = now.getFullYear() * 10000 + (now.getMonth()+1) * 100 + now.getDate();
+            return challenges[seed % challenges.length];
+        }
+
+        function loadHistory() {
+            const hist = JSON.parse(localStorage.getItem('pm_history') || '[]');
+            const container = document.getElementById('historyList');
+            if (hist.length === 0) {
+                container.innerHTML = '<div style="color:var(--muted);font-size:0.9em;">Nenhuma ação registrada ainda. Comece agora.</div>';
+            } else {
+                container.innerHTML = hist.slice(-7).reverse().map(h => `
+                    <div class="history-item">
+                        <div class="date">${h.date}</div>
+                        <div class="text">${h.text}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function saveAction() {
+            const text = document.getElementById('actionInput').value.trim();
+            if (!text) return;
+            const hist = JSON.parse(localStorage.getItem('pm_history') || '[]');
+            hist.push({ date: new Date().toLocaleDateString('pt-BR'), text });
+            localStorage.setItem('pm_history', JSON.stringify(hist));
+            document.getElementById('actionInput').value = '';
+            loadHistory();
+        }
+
+        function init() {
+            const ch = getTodayChallenge();
+            document.getElementById('challengeText').textContent = ch.q;
+            document.getElementById('challengeDate').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+            loadHistory();
+        }
+
+        init();
+    </script>
+</body>
+</html>
